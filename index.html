@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cosmic Fragment Marketplace</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <meta name="fc:frame" content='{
+    "version":"next",
+    "imageUrl":"https://i.imgur.com/EfP517b.jpeg",
+    "button":{
+      "title":"Cosmic Fragment⚔️",
+      "action":{
+        "type":"launch_frame",
+        "url":"https://testba-deepseek.vercel.app",
+        "name":"Cosmic Fragment",
+        "splashImageUrl":"https://i.imgur.com/oxfooj0_d.webp?maxwidth=760&fidelity=grand",
+        "splashBackgroundColor":"#8A5AFF"
+      }
+    }
+  }' />
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+    :root {
+      --primary: #8A5AFF;
+      --primary-dark: #6E3AFF;
+      --gray-900: #0F0F0F;
+      --gray-800: #1A1A1A;
+      --gray-700: #2E2E2E;
+      --gray-400: #A0A0A0;
+      --gray-200: #E5E5E5;
+      --success: #4CAF50;
+      --error: #F44336;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Space Grotesk', sans-serif; }
+    body { background-color: var(--gray-900); color: white; min-height: 100vh; overflow-x: hidden; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    header { display: flex; justify-content: flex-end; padding: 24px 0; }
+    .wallet-btn {
+      background: var(--primary); color: white; border: none; padding: 12px 24px;
+      border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 15px;
+      transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 20px rgba(138, 90, 255, 0.3);
+    }
+    .wallet-btn:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: 0 6px 25px rgba(138, 90, 255, 0.4); }
+    .wallet-btn i { font-size: 16px; }
+    .wallet-address {
+      background: var(--gray-800); padding: 10px 20px; border-radius: 12px;
+      font-size: 14px; font-weight: 500; display: none;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2); cursor: pointer;
+    }
+    .main-content {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 0 80px;
+    }
+    .nft-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px; width: 100%; margin-bottom: 40px;
+    }
+    .nft-card {
+      width: 100%; position: relative; overflow: hidden; 
+      border-radius: 16px; box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+    }
+    .nft-card:hover { transform: translateY(-5px); }
+    .nft-image {
+      width: 100%; aspect-ratio: 1/1; object-fit: cover;
+      display: block; transition: transform 0.5s ease;
+    }
+    .nft-card:hover .nft-image { transform: scale(1.03); }
+    .nft-overlay {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+      padding: 24px; color: white;
+    }
+    .nft-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .nft-description {
+      font-size: 14px; color: var(--gray-200); opacity: 0.9; line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    .nft-price {
+      font-size: 16px; font-weight: 600; color: var(--primary);
+      margin-bottom: 12px;
+    }
+    .nft-actions {
+      display: flex; gap: 8px; margin-top: 12px;
+    }
+    .action-btn {
+      flex: 1; padding: 10px; border-radius: 8px; border: none;
+      font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+    }
+    .buy-btn {
+      background: var(--primary); color: white;
+    }
+    .buy-btn:hover { background: var(--primary-dark); }
+    .sell-btn {
+      background: var(--gray-700); color: white;
+    }
+    .sell-btn:hover { background: var(--gray-600); }
+    .marketplace-section {
+      width: 100%; max-width: 800px; text-align: center;
+    }
+    .section-title {
+      font-size: 28px; font-weight: 700; margin-bottom: 24px;
+      text-align: center; color: white;
+    }
+    .token-balance {
+      background: var(--gray-800); padding: 16px; border-radius: 12px;
+      margin-bottom: 24px; font-size: 16px; display: inline-block;
+    }
+    .token-balance span { color: var(--primary); font-weight: 600; }
+    .tab-container {
+      display: flex; margin-bottom: 24px; border-bottom: 1px solid var(--gray-700);
+    }
+    .tab {
+      padding: 12px 24px; cursor: pointer; font-weight: 600;
+      border-bottom: 3px solid transparent; transition: all 0.3s ease;
+    }
+    .tab.active {
+      border-bottom: 3px solid var(--primary); color: var(--primary);
+    }
+    .tab-content { display: none; width: 100%; }
+    .tab-content.active { display: block; }
+    .form-group {
+      margin-bottom: 16px; text-align: left;
+    }
+    .form-group label {
+      display: block; margin-bottom: 8px; font-weight: 500;
+    }
+    .form-group input {
+      width: 100%; padding: 12px; border-radius: 8px;
+      background: var(--gray-800); border: 1px solid var(--gray-700);
+      color: white; font-size: 14px;
+    }
+    .form-group input:focus {
+      outline: none; border-color: var(--primary);
+    }
+    .submit-btn {
+      background: var(--primary); color: white; border: none;
+      padding: 14px 24px; border-radius: 8px; cursor: pointer;
+      font-weight: 600; font-size: 16px; transition: all 0.3s ease;
+      width: 100%; margin-top: 8px;
+      box-shadow: 0 4px 20px rgba(138, 90, 255, 0.3);
+    }
+    .submit-btn:hover {
+      background: var(--primary-dark); transform: translateY(-2px);
+      box-shadow: 0 6px 25px rgba(138, 90, 255, 0.4);
+    }
+    .status-message {
+      padding: 12px; border-radius: 8px; margin-top: 16px;
+      display: none;
+    }
+    .success { background: rgba(76, 175, 80, 0.2); color: var(--success); display: block; }
+    .error { background: rgba(244, 67, 54, 0.2); color: var(--error); display: block; }
+    .particles {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none; z-index: -1;
+    }
+    .particle {
+      position: absolute; width: 2px; height: 2px;
+      background: rgba(138, 90, 255, 0.5); border-radius: 50%;
+      animation: float 15s infinite linear;
+    }
+    @keyframes float {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+      10% { opacity: 1; }
+      90% { opacity: 1; }
+      100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+    }
+    @media (max-width: 768px) {
+      .main-content { padding: 20px 0 60px; }
+      .nft-grid { grid-template-columns: 1fr; }
+      .section-title { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  <div class="container">
+    <header>
+      <button class="wallet-btn" id="connectWallet">
+        <i class="fas fa-wallet"></i> Connect Wallet
+      </button>
+      <div class="wallet-address" id="walletAddress"></div>
+    </header>
+
+    <main class="main-content">
+      <h1 class="section-title">Cosmic Fragment Marketplace</h1>
+      
+      <div class="token-balance" id="tokenBalance">
+        Your Cosmic Tokens: <span id="tokenAmount">0</span> CTK
+      </div>
+      
+      <div class="marketplace-section">
+        <div class="tab-container">
+          <div class="tab active" data-tab="buy">Buy NFTs</div>
+          <div class="tab" data-tab="sell">Sell NFTs</div>
+          <div class="tab" data-tab="my-nfts">My Collection</div>
+        </div>
+        
+        <div class="tab-content active" id="buy-tab">
+          <div class="nft-grid" id="marketplaceGrid">
+            <!-- NFT items will be loaded here -->
+            <div class="nft-card">
+              <img src="https://i.imgur.com/muoYEIu.jpeg" alt="Cosmic Fragment #44" class="nft-image">
+              <div class="nft-overlay">
+                <h2 class="nft-title">Cosmic Fragment #44</h2>
+                <p class="nft-description">A unique piece of digital art, crafted with cosmic energy.</p>
+                <div class="nft-price">Price: 100 CTK</div>
+                <div class="nft-actions">
+                  <button class="action-btn buy-btn">Buy</button>
+                </div>
+              </div>
+            </div>
+            
+            <div class="nft-card">
+              <img src="https://i.imgur.com/EfP517b.jpeg" alt="Cosmic Fragment #12" class="nft-image">
+              <div class="nft-overlay">
+                <h2 class="nft-title">Cosmic Fragment #12</h2>
+                <p class="nft-description">Rare stardust collection from the Andromeda galaxy.</p>
+                <div class="nft-price">Price: 150 CTK</div>
+                <div class="nft-actions">
+                  <button class="action-btn buy-btn">Buy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="tab-content" id="sell-tab">
+          <div class="form-group">
+            <label for="nftId">NFT ID</label>
+            <input type="text" id="nftId" placeholder="Enter the NFT ID you want to sell">
+          </div>
+          <div class="form-group">
+            <label for="sellPrice">Price (CTK)</label>
+            <input type="number" id="sellPrice" placeholder="Enter price in Cosmic Tokens">
+          </div>
+          <button class="submit-btn" id="listForSale">List for Sale</button>
+          <div class="status-message" id="sellStatus"></div>
+        </div>
+        
+        <div class="tab-content" id="my-nfts-tab">
+          <div class="nft-grid" id="myNftsGrid">
+            <!-- User's NFTs will be loaded here -->
+            <div class="nft-card">
+              <img src="https://i.imgur.com/oxfooj0.jpeg" alt="Cosmic Fragment #7" class="nft-image">
+              <div class="nft-overlay">
+                <h2 class="nft-title">Cosmic Fragment #7</h2>
+                <p class="nft-description">Your personal cosmic artifact.</p>
+                <div class="nft-actions">
+                  <button class="action-btn sell-btn">Sell</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import sdk from 'https://esm.sh/@farcaster/frame-sdk';
+    window.sdk = sdk;
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await sdk.actions.ready();
+        const context = await sdk.context;
+        console.log("Farcaster context:", context);
+      } catch (err) {
+        console.error("Farcaster SDK error:", err);
+      }
+    });
+  </script>
+
+  <script>
+    let provider, signer, address;
+    const TOKEN_ADDRESS = "0x..."; // Replace with your token contract address
+    const NFT_ADDRESS = "0x...";   // Replace with your NFT contract address
+
+    // Connect wallet functionality
+    const connectWallet = document.getElementById('connectWallet');
+    const walletAddress = document.getElementById('walletAddress');
+
+    connectWallet.addEventListener('click', async () => {
+      try {
+        if (window.sdk?.wallet?.ethProvider) {
+          provider = new ethers.BrowserProvider(window.sdk.wallet.ethProvider);
+          await provider.send("eth_requestAccounts", []);
+          signer = await provider.getSigner();
+          address = await signer.getAddress();
+
+          connectWallet.style.display = 'none';
+          walletAddress.style.display = 'block';
+          walletAddress.textContent = `${address.slice(0, 6)}...${address.slice(-4)}`;
+          
+          // Load user's token balance and NFTs after connecting
+          loadTokenBalance();
+          loadUserNFTs();
+        } else {
+          alert('Please open this app inside Warpcast to connect your wallet.');
+        }
+      } catch (error) {
+        console.error("Wallet connection failed:", error);
+      }
+    });
+
+    // Tab switching functionality
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        document.getElementById(`${tab.dataset.tab}-tab`).classList.add('active');
+      });
+    });
+
+    // Token and NFT contract ABIs (simplified)
+    const tokenAbi = [
+      "function balanceOf(address) view returns (uint256)",
+      "function transfer(address, uint256) returns (bool)",
+      "function approve(address, uint256) returns (bool)"
+    ];
+    
+    const nftAbi = [
+      "function balanceOf(address) view returns (uint256)",
+      "function ownerOf(uint256) view returns (address)",
+      "function safeTransferFrom(address, address, uint256)",
+      "function approve(address, uint256)",
+      "function listForSale(uint256, uint256)",
+      "function buyNFT(uint256)",
+      "function getNFTPrice(uint256) view returns (uint256)",
+      "function tokenURI(uint256) view returns (string)"
+    ];
+    
+    const marketplaceAbi = [
+      "function getListedNFTs() view returns (uint256[])",
+      "function getNFTDetails(uint256) view returns (address, uint256)"
+    ];
+
+    // Load user's token balance
+    async function loadTokenBalance() {
+      if (!signer) return;
+      
+      try {
+        const tokenContract = new ethers.Contract(TOKEN_ADDRESS, tokenAbi, signer);
+        const balance = await tokenContract.balanceOf(address);
+        document.getElementById('tokenAmount').textContent = ethers.formatUnits(balance, 18);
+      } catch (err) {
+        console.error("Failed to load token balance:", err);
+      }
+    }
+
+    // Load user's owned NFTs
+    async function loadUserNFTs() {
+      if (!signer) return;
+      
+      try {
+        const nftContract = new ethers.Contract(NFT_ADDRESS, nftAbi, signer);
+        const balance = await nftContract.balanceOf(address);
+        
+        const myNftsGrid = document.getElementById('myNftsGrid');
+        myNftsGrid.innerHTML = '';
+        
+        for (let i = 0; i < balance; i++) {
+          const tokenId = await nftContract.tokenOfOwnerByIndex(address, i);
+          // In a real app, you would fetch the NFT metadata from tokenURI
+          
+          const nftCard = document.createElement('div');
+          nftCard.className = 'nft-card';
+          nftCard.innerHTML = `
+            <img src="https://i.imgur.com/muoYEIu.jpeg" alt="Cosmic Fragment" class="nft-image">
+            <div class="nft-overlay">
+              <h2 class="nft-title">Cosmic Fragment #${tokenId}</h2>
+              <p class="nft-description">Your personal cosmic artifact.</p>
+              <div class="nft-actions">
+                <button class="action-btn sell-btn" data-id="${tokenId}">Sell</button>
+              </div>
+            </div>
+          `;
+          myNftsGrid.appendChild(nftCard);
+        }
+        
+        // Add event listeners to sell buttons
+        document.querySelectorAll('.sell-btn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            // Switch to sell tab and populate NFT ID
+            document.querySelector('.tab[data-tab="sell"]').click();
+            document.getElementById('nftId').value = btn.dataset.id;
+          });
+        });
+      } catch (err) {
+        console.error("Failed to load user NFTs:", err);
+      }
+    }
+
+    // List NFT for sale
+    document.getElementById('listForSale').addEventListener('click', async () => {
+      const nftId = document.getElementById('nftId').value;
+      const price = document.getElementById('sellPrice').value;
+      const statusElement = document.getElementById('sellStatus');
+      
+      if (!nftId || !price) {
+        statusElement.textContent = "Please fill in all fields";
+        statusElement.className = "status-message error";
+        return;
+      }
+      
+      try {
+        const nftContract = new ethers.Contract(NFT_ADDRESS, nftAbi, signer);
+        const tx = await nftContract.listForSale(nftId, ethers.parseUnits(price, 18));
+        
+        statusElement.textContent = "Transaction submitted! Waiting for confirmation...";
+        statusElement.className = "status-message";
+        
+        await tx.wait();
+        
+        statusElement.textContent = "NFT listed for sale successfully!";
+        statusElement.className = "status-message success";
+        
+        // Refresh marketplace and user's NFTs
+        loadMarketplaceNFTs();
+        loadUserNFTs();
+      } catch (err) {
+        console.error("Failed to list NFT:", err);
+        statusElement.textContent = "Error: " + (err.message || "Transaction failed");
+        statusElement.className = "status-message error";
+      }
+    });
+
+    // Buy NFT functionality (attached to buy buttons)
+    document.addEventListener('click', async (e) => {
+      if (e.target.classList.contains('buy-btn')) {
+        const nftCard = e.target.closest('.nft-card');
+        const nftId = nftCard.querySelector('.nft-title').textContent.split('#')[1];
+        
+        try {
+          const nftContract = new ethers.Contract(NFT_ADDRESS, nftAbi, signer);
+          const price = await nftContract.getNFTPrice(nftId);
+          
+          // First approve the token transfer
+          const tokenContract = new ethers.Contract(TOKEN_ADDRESS, tokenAbi, signer);
+          const approveTx = await tokenContract.approve(NFT_ADDRESS, price);
+          await approveTx.wait();
+          
+          // Then execute the buy
+          const buyTx = await nftContract.buyNFT(nftId);
+          await buyTx.wait();
+          
+          alert("NFT purchased successfully!");
+          
+          // Refresh balances and listings
+          loadTokenBalance();
+          loadMarketplaceNFTs();
+          loadUserNFTs();
+        } catch (err) {
+          console.error("Failed to buy NFT:", err);
+          alert("Purchase failed: " + (err.message || "See console for details"));
+        }
+      }
+    });
+
+    // Load NFTs listed in marketplace
+    async function loadMarketplaceNFTs() {
+      try {
+        const marketplaceContract = new ethers.Contract(NFT_ADDRESS, marketplaceAbi, provider);
+        const listedNFTs = await marketplaceContract.getListedNFTs();
+        
+        const marketplaceGrid = document.getElementById('marketplaceGrid');
+        marketplaceGrid.innerHTML = '';
+        
+        for (const nftId of listedNFTs) {
+          const [seller, price] = await marketplaceContract.getNFTDetails(nftId);
+          const formattedPrice = ethers.formatUnits(price, 18);
+          
+          // Skip NFTs listed by the current user
+          if (seller.toLowerCase() === address.toLowerCase()) continue;
+          
+          // In a real app, you would fetch the NFT metadata from tokenURI
+          const nftCard = document.createElement('div');
+          nftCard.className = 'nft-card';
+          nftCard.innerHTML = `
+            <img src="https://i.imgur.com/muoYEIu.jpeg" alt="Cosmic Fragment #${nftId}" class="nft-image">
+            <div class="nft-overlay">
+              <h2 class="nft-title">Cosmic Fragment #${nftId}</h2>
+              <p class="nft-description">A unique piece of digital art, crafted with cosmic energy.</p>
+              <div class="nft-price">Price: ${formattedPrice} CTK</div>
+              <div class="nft-actions">
+                <button class="action-btn buy-btn" data-id="${nftId}">Buy</button>
+              </div>
+            </div>
+          `;
+          marketplaceGrid.appendChild(nftCard);
+        }
+      } catch (err) {
+        console.error("Failed to load marketplace NFTs:", err);
+      }
+    }
+
+    // Initialize marketplace on load
+    window.addEventListener('load', () => {
+      if (window.sdk?.wallet?.ethProvider) {
+        loadMarketplaceNFTs();
+      }
+    });
+
+    // Particle effect
+    function createParticle() {
+      const particle = document.createElement('div');
+      particle.classList.add('particle');
+      document.getElementById('particles').appendChild(particle);
+      particle.style.left = `${Math.random() * window.innerWidth}px`;
+      particle.style.top = `${Math.random() * window.innerHeight}px`;
+      const size = Math.random() * 3 + 2;
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+    }
+
+    setInterval(createParticle, 100);
+  </script>
+</body>
+</html>
